@@ -1,5 +1,5 @@
 name: astrbot_plugin_affection
-desc: 棱镜娘好感度系统，支持好感度查询、投喂、忏悔、等级解锁与人设注入。
+desc: 棱镜娘好感度系统，好感度查询/投喂/忏悔/等级解锁/人设注入/WebUI配置。
 author: NLKASHEI
-version: 1.0.0
+version: 1.2.0
 repo: https://github.com/NLKASHEI/astrbot_plugin_affection
