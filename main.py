@@ -224,7 +224,7 @@ class AffectionPlugin(Star):
 
     # ==================== 命令注册 ====================
 
-    @filter.command("haogandu")
+    @filter.command("好感度")
     async def cmd_affection(self, event: AstrMessageEvent):
         """查询你与棱镜娘的好感度状态"""
         uid = event.get_sender_id()
