@@ -17,6 +17,18 @@
     "default": 1,
     "hint": "每次触发时增加的精确点数"
   },
+  "max_daily_feedings": {
+    "description": "每日最大投喂次数",
+    "type": "int",
+    "default": 3,
+    "hint": "每天允许投喂的次数上限（对齐类脑娘）"
+  },
+  "feeding_cooldown_minutes": {
+    "description": "投喂冷却时间(分钟)",
+    "type": "int",
+    "default": 30,
+    "hint": "两次投喂之间需要等待的分钟数"
+  },
   "confession_cooldown_hours": {
     "description": "忏悔冷却时间(小时)",
     "type": "int",
@@ -34,5 +46,53 @@
     "type": "int",
     "default": 5,
     "hint": "每天凌晨好感度随机浮动的最大值"
+  },
+  "img_gen_enabled": {
+    "description": "启用 AI 生图回应",
+    "type": "text",
+    "default": "false",
+    "hint": "投喂真食物时是否用 AI 生成 Bot 进食图片（需要配置下方 API）。填 true 或 false"
+  },
+  "img_gen_api_base": {
+    "description": "AI 生图 API 地址",
+    "type": "text",
+    "default": "",
+    "hint": "OpenAI 兼容的生图 API 地址，如 Gemini Image Gen 的 base URL"
+  },
+  "img_gen_api_key": {
+    "description": "AI 生图 API Key",
+    "type": "text",
+    "default": "",
+    "hint": "生图 API 的密钥"
+  },
+  "img_gen_model": {
+    "description": "AI 生图模型",
+    "type": "text",
+    "default": "gemini-2.5-flash-image",
+    "hint": "生图模型名称"
+  },
+  "img_gen_size": {
+    "description": "生成图片尺寸",
+    "type": "text",
+    "default": "1024x1024",
+    "hint": "如 1024x1024, 1792x1024"
+  },
+  "img_gen_timeout": {
+    "description": "生图超时时间(秒)",
+    "type": "int",
+    "default": 180,
+    "hint": "生图 API 的超时时间"
+  },
+  "currency_name": {
+    "description": "货币名称（需与economy插件一致）",
+    "type": "text",
+    "default": "棱镜币",
+    "hint": "投喂奖励的货币名称，需与 astrbot_plugin_economy 插件设置一致"
+  },
+  "currency_emoji": {
+    "description": "货币图标",
+    "type": "text",
+    "default": "💎",
+    "hint": "货币显示用的 emoji 图标"
   }
 }
