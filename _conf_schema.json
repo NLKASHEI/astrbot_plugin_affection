@@ -1,0 +1,38 @@
+{
+  "daily_cap": {
+    "description": "每日聊天获得好感度上限",
+    "type": "int",
+    "default": 50,
+    "hint": "每天通过聊天最多能获得的好感度点数"
+  },
+  "chat_chance": {
+    "description": "聊天触发好感度概率",
+    "type": "float",
+    "default": 0.15,
+    "hint": "每次发言触发好感度增长的概率(0~1)"
+  },
+  "chat_amount": {
+    "description": "每次聊天增加点数",
+    "type": "int",
+    "default": 1,
+    "hint": "每次触发时增加的精确点数"
+  },
+  "confession_cooldown_hours": {
+    "description": "忏悔冷却时间(小时)",
+    "type": "int",
+    "default": 6,
+    "hint": "两次忏悔之间需要等待的小时数"
+  },
+  "fluctuation_min": {
+    "description": "每日浮动最小值",
+    "type": "int",
+    "default": -5,
+    "hint": "每天凌晨好感度随机浮动的最小值"
+  },
+  "fluctuation_max": {
+    "description": "每日浮动最大值",
+    "type": "int",
+    "default": 5,
+    "hint": "每天凌晨好感度随机浮动的最大值"
+  }
+}

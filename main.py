@@ -21,7 +21,7 @@ from datetime import datetime, timezone, timedelta
 
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star
-from astrbot.api import logger
+from astrbot.api import logger, AstrBotConfig
 from astrbot.api.message_components import Image as ImageComp
 
 BEIJING_TZ = timezone(timedelta(hours=8))
@@ -175,17 +175,20 @@ class AffectionDB:
 
 
 class AffectionPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         self.db = AffectionDB(os.path.join(data_dir, "affection.db"))
         self.db.init()
-        self.daily_cap = 50          # 每日聊天好感度上限
-        self.chat_chance = 0.15      # 聊天触发好感度概率
-        self.chat_amount = 1         # 每次聊天增加
-        self.feeding_cap = 20        # 每次投喂最大好感度
-        self.feeding_min = 5         # 每次投喂最低好感度
-        self.confession_cooldown_hours = 6  # 忏悔冷却(小时)
+
+        # 从 WebUI 配置面板读取（带默认值）
+        cfg = config or {}
+        self.daily_cap = int(cfg.get("daily_cap", 50))
+        self.chat_chance = float(cfg.get("chat_chance", 0.15))
+        self.chat_amount = int(cfg.get("chat_amount", 1))
+        self.confession_cooldown_hours = int(cfg.get("confession_cooldown_hours", 6))
+        self.fluctuation_min = int(cfg.get("fluctuation_min", -5))
+        self.fluctuation_max = int(cfg.get("fluctuation_max", 5))
 
         # 启动每日浮动后台任务
         asyncio.create_task(self._daily_fluctuation_loop())
@@ -423,7 +426,7 @@ class AffectionPlugin(Star):
                         "SELECT user_id, affection_points FROM affection"
                     ).fetchall()
                     for row in rows:
-                        fluctuation = random.randint(-5, 5)
+                        fluctuation = random.randint(self.fluctuation_min, self.fluctuation_max)
                         new_pts = max(0, row["affection_points"] + fluctuation)
                         conn.execute(
                             "UPDATE affection SET affection_points = ? WHERE user_id = ?",
