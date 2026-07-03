@@ -274,14 +274,12 @@ class AffectionPlugin(Star):
     # ==================== 人格读取 ====================
 
     async def _get_persona(self, event: AstrMessageEvent) -> tuple[str, str]:
-        """从 AstrBot 人格管理器读取当前 Bot 的人设名称和提示词"""
+        """读取 AstrBot 人格提示词（名字锁死为棱镜娘）"""
         try:
             pm = self.context.persona_manager
             persona = await pm.get_default_persona_v3(umo=event.unified_msg_origin)
             if persona:
-                name = persona.get("name", "棱镜娘")
-                prompt = persona.get("prompt", "")
-                return name, prompt
+                return "棱镜娘", persona.get("prompt", "")
         except Exception as e:
             logger.warning(f"[Affection] 读取人格失败: {e}")
         return "棱镜娘", ""
