@@ -347,8 +347,8 @@ class AffectionPlugin(Star):
     # ==================== /投喂 ====================
 
     @filter.command("投喂")
-    async def cmd_feed(self, event: AstrMessageEvent):
-        """给棱镜娘投喂食物——拍下你这顿饭的照片给她看！"""
+    async def cmd_feed(self, event: AstrMessageEvent, 食物图片描述: str = ""):
+        """给 Bot 投喂食物——拍下你这顿饭的照片发过来！（图片必须，描述可选）"""
 
         uid = event.get_sender_id()
         uname = event.get_sender_name() or "你"
@@ -368,13 +368,17 @@ class AffectionPlugin(Star):
                     break
 
         if not image_url:
-            # 对齐类脑娘：投喂必须是图片
-            yield event.plain_result(
-                "欸？你要给我吃什么呀～拍张照片让我看看嘛！  \n"
-                "就像这样：先上传一张食物图片，再发送 `/投喂` 命令～\n\n"
-                f"*（在吃饭？给{bot_name}来一口怎么样~）*"
-            )
-            return
+            if 食物图片描述.strip():
+                # 没有图片但有文字描述，用文字描述生成评价
+                pass
+            else:
+                yield event.plain_result(
+                    "欸？你要给我吃什么呀～拍张照片让我看看嘛！  \n"
+                    "先上传一张食物图片，再发送 `/投喂` 命令～\n"
+                    "或者在 `/投喂` 后面描述一下是什么食物也行哦～\n\n"
+                    f"*（在吃饭？给{bot_name}来一口怎么样~）*"
+                )
+                return
 
         # ---- 投喂限制检查 ----
         now = datetime.now(BEIJING_TZ)
@@ -423,7 +427,7 @@ class AffectionPlugin(Star):
             yield event.plain_result("呜...图片加载失败了，重新发一次好不好？")
             return
 
-        # ---- AI 视觉评价 ----
+        # ---- AI 评价（图片优先，文字兜底） ----
         try:
             prompt = _build_feeding_prompt(
                 persona=persona_prompt,
@@ -433,17 +437,20 @@ class AffectionPlugin(Star):
                 currency_name=self.currency_name,
             )
 
-            provider_id = await self.context.get_current_chat_provider_id(umo=event.unified_msg_origin)
-            if not provider_id:
-                raise Exception("无可用 AI Provider")
-
-            provider = await self.context.get_provider_by_id(provider_id)
-            if not provider:
-                raise Exception("无法获取 Provider 实例")
-
-            req = ProviderRequest(prompt=prompt, image_bytes=image_bytes)
-            llm_resp = await provider.text_chat(req)
-            result = llm_resp.completion_text if llm_resp else ""
+            if image_url:
+                provider_id = await self.context.get_current_chat_provider_id(umo=event.unified_msg_origin)
+                if not provider_id:
+                    raise Exception("无可用 AI Provider")
+                provider = await self.context.get_provider_by_id(provider_id)
+                if not provider:
+                    raise Exception("无法获取 Provider 实例")
+                req = ProviderRequest(prompt=prompt, image_bytes=image_bytes)
+                llm_resp = await provider.text_chat(req)
+                result = llm_resp.completion_text if llm_resp else ""
+            else:
+                # 纯文字投喂（无图片）
+                text_prompt = f"{prompt}\n\n用户说他给你带来了「{食物图片描述.strip()}」。虽然没看到图片，但还是评价一下吧。"
+                result = await self._call_llm(event, text_prompt)
 
             if not result:
                 raise Exception("AI 返回为空")
