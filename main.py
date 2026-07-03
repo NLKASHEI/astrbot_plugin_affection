@@ -349,7 +349,11 @@ class AffectionPlugin(Star):
             "",
             progress_line,
         ]
-        yield event.plain_result("\n".join(lines))
+        content = "\n".join(lines)
+        if getattr(event, 'interaction_followup_webhook', None):
+            await event.interaction_followup_webhook.send(content, ephemeral=True)
+            return
+        yield event.plain_result(content)
 
     # ==================== /投喂 ====================
 
