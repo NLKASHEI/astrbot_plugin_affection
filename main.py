@@ -548,7 +548,7 @@ class AffectionPlugin(Star):
     # ==================== /忏悔 ====================
 
     @filter.command("忏悔")
-    async def cmd_confess(self, event: AstrMessageEvent, content: str = ""):
+    async def cmd_confess(self, event: AstrMessageEvent, 忏悔内容: str = ""):
         """向棱镜娘忏悔，AI 回应并决定好感度变化"""
 
         uid = event.get_sender_id()
@@ -557,7 +557,7 @@ class AffectionPlugin(Star):
         points = data["affection_points"]
         level = get_affection_level(points)
 
-        if not content.strip():
+        if not 忏悔内容.strip():
             yield event.plain_result(
                 "你想忏悔什么？告诉我吧...  \n"
                 "例如: `/忏悔 我今天偷吃了你的零食`"
@@ -590,7 +590,7 @@ class AffectionPlugin(Star):
             prompt = _build_confession_prompt(
                 persona=persona_prompt,
                 user_name=uname,
-                content=content,
+                content=忏悔内容,
                 level_name=level["name"],
                 points=points,
                 bot_name=bot_name,
@@ -599,11 +599,11 @@ class AffectionPlugin(Star):
             if response_text:
                 response, change = _parse_confession_response(response_text)
             else:
-                response = _confession_fallback(uname, content)
+                response = _confession_fallback(uname, 忏悔内容)
                 change = 0
         except Exception as e:
             logger.error(f"[Affection] 忏悔 AI 调用失败: {e}")
-            response = _confession_fallback(uname, content)
+            response = _confession_fallback(uname, 忏悔内容)
             change = 0
 
         # 对齐类脑娘：好感度 >= 20 后忏悔不影响好感度
