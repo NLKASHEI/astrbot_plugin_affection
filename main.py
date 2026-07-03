@@ -284,6 +284,19 @@ class AffectionPlugin(Star):
             logger.warning(f"[Affection] 读取人格失败: {e}")
         return "棱镜娘", ""
 
+    def _find_vision_provider(self):
+        """在所有已配置 Provider 中查找多模态/视觉模型（Gemini/GPT-4V/Claude等）"""
+        vision_keywords = ("gemini", "vision", "gpt-4o", "gpt-4-turbo", "claude", "qvq", "qwen-vl")
+        try:
+            for prov in self.context.provider_manager.provider_insts:
+                model = (prov.meta().model or "").lower()
+                if any(kw in model for kw in vision_keywords):
+                    logger.info(f"[Affection] 找到多模态 Provider: {prov.meta().id} ({prov.meta().model})")
+                    return prov
+        except Exception:
+            pass
+        return None
+
     async def _text_only_feed(self, event, food_desc, user_name, level, persona, bot_name):
         """纯文字投喂：用文字描述生成 AI 评价"""
         prompt = _build_feeding_prompt(
@@ -459,18 +472,6 @@ class AffectionPlugin(Star):
 
         yield event.plain_result(f"{bot_name}正在嚼嚼嚼...  ")
 
-        # ---- 下载图片 ----
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                resp = await client.get(image_url)
-                resp.raise_for_status()
-                image_bytes = resp.content
-                image_mime = resp.headers.get("content-type", "image/png")
-        except Exception as e:
-            logger.error(f"[Affection] 下载食物图片失败: {e}")
-            yield event.plain_result("呜...图片加载失败了，重新发一次好不好？")
-            return
-
         # ---- AI 评价（图片优先，文字兜底） ----
         try:
             prompt = _build_feeding_prompt(
@@ -482,17 +483,17 @@ class AffectionPlugin(Star):
             )
 
             if image_url:
-                provider_id = await self.context.get_current_chat_provider_id(umo=event.unified_msg_origin)
-                if not provider_id:
-                    raise Exception("无可用 AI Provider")
-                provider = await self.context.get_provider_by_id(provider_id)
+                # 优先用多模态模型，找不到则用当前 Provider
+                provider = self._find_vision_provider()
                 if not provider:
-                    raise Exception("无法获取 Provider 实例")
-                req = ProviderRequest(prompt=prompt, image_bytes=image_bytes)
+                    pid = await self.context.get_current_chat_provider_id(umo=event.unified_msg_origin)
+                    provider = await self.context.get_provider_by_id(pid) if pid else None
+                if not provider:
+                    raise Exception("无可用 AI Provider")
+                req = ProviderRequest(prompt=prompt, image_urls=[image_url])
                 llm_resp = await provider.text_chat(req)
                 result = llm_resp.completion_text if llm_resp else ""
             else:
-                # 纯文字投喂（无图片）
                 text_prompt = f"{prompt}\n\n用户说他给你带来了「{食物图片描述.strip()}」。虽然没看到图片，但还是评价一下吧。"
                 result = await self._call_llm(event, text_prompt)
 
