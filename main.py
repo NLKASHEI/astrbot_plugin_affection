@@ -284,6 +284,15 @@ class AffectionPlugin(Star):
             logger.warning(f"[Affection] 读取人格失败: {e}")
         return "棱镜娘", ""
 
+    async def _text_only_feed(self, event, food_desc, user_name, level, persona, bot_name):
+        """纯文字投喂：用文字描述生成 AI 评价"""
+        prompt = _build_feeding_prompt(
+            persona=persona, user_name=user_name, level=level,
+            bot_name=bot_name, currency_name=self.currency_name,
+        )
+        text_prompt = f"{prompt}\n\n用户说他给你带来了「{food_desc}」。虽然没看到图片，但还是评价一下吧。"
+        return await self._call_llm(event, text_prompt)
+
     # ==================== 被动聊天好感度 ====================
 
     @filter.event_message_type(filter.EventMessageType.ALL)
@@ -364,11 +373,44 @@ class AffectionPlugin(Star):
                 if isinstance(comp, ImageComp):
                     image_url = getattr(comp, "url", None) or getattr(comp, "file", None)
                     break
+                # Discord 附件可能以 File 组件传入
+                if hasattr(comp, "url") and getattr(comp, "url", ""):
+                    u = str(getattr(comp, "url", ""))
+                    if u.startswith("http"):
+                        image_url = u
+                        break
 
         if not image_url:
             if 食物图片描述.strip():
-                # 没有图片但有文字描述，用文字描述生成评价
-                pass
+                # 没有图片但有文字描述，直接走纯文字投喂
+                yield event.plain_result(f"{bot_name}正在脑补美食...  ")
+                result = await self._text_only_feed(event, 食物图片描述.strip(), uname, level_name, persona_prompt, bot_name)
+                if result is None:
+                    yield event.plain_result("呜...AI 好像不在状态，等会儿再试试好不好？")
+                    return
+                parsed = _parse_feeding_response(result)
+                if not parsed:
+                    parsed = {
+                        "evaluation": result.strip() or "嗯嗯...好吃！",
+                        "affection_gain": 1, "coin_gain": 10,
+                        "is_food": False, "food_desc": "", "scene_desc": "",
+                    }
+                evaluation = parsed["evaluation"]
+                affection_gain = max(1, min(parsed["affection_gain"], 20))
+                coin_gain = max(0, parsed["coin_gain"])
+                new_points = data["affection_points"] + affection_gain
+                self.db.update(
+                    uid,
+                    affection_points=new_points,
+                    last_interact=datetime.now(BEIJING_TZ).strftime("%Y-%m-%d"),
+                )
+                coin_msg = self.economy.add_coins(uid, coin_gain, f"投喂描述「{食物图片描述[:20]}」")
+                yield event.plain_result(
+                    f"{evaluation}\n\n"
+                    f"💕 好感度 +{affection_gain}（当前 {new_points}）"
+                    + (f"\n{self.currency_emoji} +{coin_gain} {self.currency_name}" if coin_msg else "")
+                )
+                return
             else:
                 yield event.plain_result(
                     "欸？你要给我吃什么呀～拍张照片让我看看嘛！  \n"
