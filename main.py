@@ -3,9 +3,9 @@
 astrbot_plugin_affection - 棱镜娘好感度系统 v1.4
 
 完全对齐类脑娘好感度实现：
-- /好感度 查询当前好感度等级（丰富格式）
-- /投喂  给 Bot 投喂食物图片 → AI 视觉评价 → 动态人格注入 → 好感度+货币 → AI 生图回应
-- /忏悔  向 Bot 忏悔 → 动态人格注入 → AI 回应 → 好感度变化
+- /affection  查询当前好感度等级（丰富格式）
+- /feed  给 Bot 投喂食物图片 → AI 视觉评价 → 动态人格注入 → 好感度+货币 → AI 生图回应
+- /confess  向 Bot 忏悔 → 动态人格注入 → AI 回应 → 好感度变化
 - 被动聊天好感度增长（每日上限）
 - 每日好感度浮动（凌晨随机变化 + 自然衰减）
 - LLM 人设注入（根据好感度等级调整语气）
@@ -309,7 +309,7 @@ class AffectionPlugin(Star):
 
     # ==================== /好感度 ====================
 
-    @filter.command("好感度")
+    @filter.command("affection", alias={"好感度"})
     async def cmd_affection(self, event: AstrMessageEvent):
         """查询你与 Bot 的好感度状态"""
         uid = event.get_sender_id()
@@ -346,7 +346,7 @@ class AffectionPlugin(Star):
 
     # ==================== /投喂 ====================
 
-    @filter.command("投喂")
+    @filter.command("feed", alias={"投喂"})
     async def cmd_feed(self, event: AstrMessageEvent, 食物图片描述: str = ""):
         """给 Bot 投喂食物——拍下你这顿饭的照片发过来！（图片必须，描述可选）"""
 
@@ -374,8 +374,8 @@ class AffectionPlugin(Star):
             else:
                 yield event.plain_result(
                     "欸？你要给我吃什么呀～拍张照片让我看看嘛！  \n"
-                    "先上传一张食物图片，再发送 `/投喂` 命令～\n"
-                    "或者在 `/投喂` 后面描述一下是什么食物也行哦～\n\n"
+                    "先上传一张食物图片，再发送 `/feed` 命令～\n"
+                    "或者在 `/feed` 后面描述一下是什么食物也行哦～\n\n"
                     f"*（在吃饭？给{bot_name}来一口怎么样~）*"
                 )
                 return
@@ -554,7 +554,7 @@ class AffectionPlugin(Star):
 
     # ==================== /忏悔 ====================
 
-    @filter.command("忏悔")
+    @filter.command("confess", alias={"忏悔"})
     async def cmd_confess(self, event: AstrMessageEvent, 忏悔内容: str = ""):
         """向棱镜娘忏悔，AI 回应并决定好感度变化"""
 
@@ -567,7 +567,7 @@ class AffectionPlugin(Star):
         if not 忏悔内容.strip():
             yield event.plain_result(
                 "你想忏悔什么？告诉我吧...  \n"
-                "例如: `/忏悔 我今天偷吃了你的零食`"
+                "例如: `/confess 我今天偷吃了你的零食`"
             )
             return
 
