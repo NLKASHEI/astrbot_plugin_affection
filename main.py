@@ -311,8 +311,8 @@ class AffectionPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def on_chat_affection(self, event: AstrMessageEvent):
         uid = event.get_sender_id()
-        if not uid:
-            return
+        if not uid or uid == event.get_self_id():
+            return  # 忽略 Bot 自己的消息
         data = self.db.get(uid)
         if data["daily_gain"] >= self.daily_cap:
             return
